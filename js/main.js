@@ -1,6 +1,8 @@
 /* 1. CONFIGURACIÓN
 ____________________________ */
 
+/* ---Dependencias---*/
+import { nuevaBaraja } from "./api.js";
 
 
 
@@ -26,8 +28,19 @@ ____________________________*/
 
 /* 5. EVENTOS 
 ____________________________*/
-botonEmpezarJuego.addEventListener("click", () => {
+botonEmpezarJuego.addEventListener("click", async () => {
     estadoPartida.textContent = "Preparando la baraja..."
+
+    const barajaAPI = await nuevaBaraja();
+    if (barajaAPI.error) {
+        console.error("No se ha podido obtener una baraja nueva.",
+            barajaAPI.error
+        );
+        return;
+    }
+
+    const datosBaraja = barajaAPI.data;
+    console.log(datosBaraja);
 })
 
 
