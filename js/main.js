@@ -2,7 +2,7 @@
 ____________________________ */
 
 /* ---Dependencias---*/
-import { nuevaBaraja } from "./api.js";
+import { nuevaBaraja, robarCarta } from "./api.js";
 
 
 
@@ -22,7 +22,14 @@ ____________________________*/
 
 /* 4. FUNCIONES 
 ____________________________*/
-
+function comprobarError(valor) {
+    if (valor.error) {
+        console.error("No se ha podido preparar la baraja",
+            valor.error
+        );
+        return true;
+    }
+}
 
 
 
@@ -32,15 +39,16 @@ botonEmpezarJuego.addEventListener("click", async () => {
     estadoPartida.textContent = "Preparando la baraja..."
 
     const barajaAPI = await nuevaBaraja();
-    if (barajaAPI.error) {
-        console.error("No se ha podido obtener una baraja nueva.",
-            barajaAPI.error
-        );
-        return;
-    }
+    if (comprobarError(barajaAPI)) { return; }
 
     const datosBaraja = barajaAPI.data;
     console.log(datosBaraja);
+
+    const roboCarta = await robarCarta(datosBaraja.deck_id, 1);
+    if (comprobarError(roboCarta)) { return; }
+
+    const cartaRobada = roboCarta.data.cards[0];
+    console.log(cartaRobada);
 })
 
 
