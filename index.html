@@ -13,57 +13,71 @@
 
         <section id="inicio-juego">
             <p>Saldo:
-                <span id="saldo-dinero">0</span>
-                €
+                <span id="saldo-dinero">0</span> €
             </p>
             <button type="button" id="boton-jugar">Jugar</button>
         </section>
 
         <section id="info-juego">
-
-            <div id="cabecera-juego">
-                <h2 id="titulo-juego">JUEGO: Pleno de 5</h2>
-                <p>Este juego se trata de adivinar y pasar por las diferentes rondas. Bla bla bla.</p>
-            </div>
-
-            <div id="info-ronda">
-                <h3 id="nombre-ronda">Nombre ronda</h3>
-                <p id="numero-rondas"></p>
-                <p id="descripcion-ronda"></p>
-            </div>
-
+            <h2 id="titulo-juego">Blackjack</h2>
+            <p>Acércate a 21 sin pasarte y supera la puntuación de la banca.</p>
         </section>
 
-
-
-
-
         <section id="mesa-juego">
+            <h2>Mesa de juego</h2>
+
+            <!-- ZONA BANCA
+             ________________________ -->
+
+            <div id="zona-banca">
+                <h3>Banca</h3>
+                <p>
+                    Puntos:
+                    <span id="puntos-banca">0</span>
+                </p>
+                <div id="cartas-banca">
+                    <p>Esperando el reparto...</p>
+                </div>
+            </div>
+
+            <!-- PILA BARAJA
+             ________________________ -->
 
             <div id="pila-baraja">
                 <p>Todavía no hay una baraja</p>
             </div>
 
-            <div id="carta-mesa">
-                <p>Todavía no hay carta en la mesa</p>
-            </div>
+            <!-- ZONA JUGADOR
+             ________________________ -->
 
-            <div id="carta-mano">
-                <p>Todavía no tienes cartas en la mano</p>
+            <div id="zona-jugador">
+                <h3>Tu mano</h3>
+                <p>
+                    Puntos:
+                    <span id="puntos-jugador">0</span>
+                </p>
+                <div id="cartas-jugador">
+                    <p>Esperando el reparto...</p>
+                </div>
             </div>
-
         </section>
 
+        <section id="acciones-juego">
+            <h2>Tu turno</h2>
 
-        <section id="decisiones">
+            <p id="mensaje-juego">Pulsa «Jugar» para empezar.</p>
 
-            <div id="opciones-ronda">
-                <button type="button" id="boton-opcion1" disabled>Mayor</button>
-                <button type="button" id="boton-opcion2" disabled>Menor</button>
+            <div>
+                <button type="button" id="boton-pedir" disabled>
+                    Pedir carta
+                </button>
+
+                <button type="button" id="boton-plantarse" disabled>
+                    Plantarse
+                </button>
             </div>
 
-            <p id="resultado-ronda">Sin resultado</p>
-
+            <p id="resultado-partida"></p>
         </section>
 
     </main>
