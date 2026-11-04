@@ -12,6 +12,10 @@
         <h1>BBK BetCamp</h1>
 
         <section id="inicio-juego">
+
+            <label for="nombre-jugador">Nombre del jugador</label>
+            <input type="text" id="nombre-jugador" maxlength="30" placeholder="Escribe tu nombre">
+
             <p>Saldo:
                 <span id="saldo-dinero">0</span> €
             </p>
@@ -78,6 +82,26 @@
             </div>
 
             <p id="resultado-partida"></p>
+        </section>
+
+        <section id="historial">
+            <h2>Historial de partidas</h2>
+
+            <label for="filtro-nombre">Buscar por nombre</label>
+            <input type="search" id="filtro-nombre" placeholder="Nombre del jugador">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Jugador</th>
+                        <th scope="col">Tus puntos</th>
+                        <th scope="col">Puntos de la banca</th>
+                        <th scope="col">Resultado</th>
+                    </tr>
+                </thead>
+
+                <tbody id="historial-resultados"></tbody>
+            </table>
         </section>
 
     </main>
