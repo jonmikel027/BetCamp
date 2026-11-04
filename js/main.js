@@ -11,13 +11,14 @@ const rondas = [
         titulo: "Par o impar",
         descripcion: "Adivina si la carta será par o impar. El as vale 1, la jota 11, la reina 12 y el rey 13.",
         opciones: ["Par", "Impar"],
-        instrucciones: "Elige una opción."
+        instrucciones: "Elige una opción.",
+        comprobacion: comprobarParidad
     },
     {
         titulo: "Mayor o menor",
         descripcion: "Adivina si la siguiente carta será mayor o menor que la anterior.",
         opciones: ["Mayor", "Menor"],
-        instrucciones: "Elige una opción."
+        instrucciones: "Elige una opción.",
     }
 ];
 
@@ -55,6 +56,9 @@ let cargando = false;
 /* 4. FUNCIONES 
 ____________________________*/
 
+/* 4.1 Mostrar
+--------------- */
+
 function mostrarPila() {
     const reversoCarta = document.createElement("img");
     reversoCarta.src = imagenReverso;
@@ -63,13 +67,12 @@ function mostrarPila() {
     pilaBaraja.replaceChildren(reversoCarta);
 }
 
-function comprobarError(valor) {
-    if (valor.error) {
-        console.error("No se ha podido preparar la baraja",
-            valor.error
-        );
-        return true;
-    }
+function mostrarCarta(carta, zona) {
+    const imagenCarta = document.createElement("img");
+    imagenCarta.src = carta.image;
+    imagenCarta.alt = carta.value + " - " + carta.suit;
+
+    zona.replaceChildren(imagenCarta);
 }
 
 function mostrarRonda() {
@@ -86,12 +89,57 @@ function mostrarRonda() {
 
 }
 
-async function resolverRonda(prediccion) {
+/* 4.2 Comprobaciones de rondas
+---------------*/
+
+async function resolverRonda(comprobacion, prediccion) {
     const cartaRobadaAPI = await robarCarta(barajaJuego.deck_id, 1);
     if (comprobarError(cartaRobadaAPI)) { return; };
 
     cartaActual = cartaRobadaAPI.data.cards[0];
-    console.log(prediccion, cartaActual);
+    mostrarCarta(cartaActual, cartaMesa);
+
+    const valorCartaActual = valorCarta(cartaActual);
+    const resultado = comprobacion(valorCartaActual);
+
+    if (resultado === prediccion) {
+        resultadoRonda.textContent = "Genial! Seguimos jugando"
+    } else {
+        resultadoRonda.textContent = "Oh... Has fallado esta ronda"
+    }
+}
+
+function comprobarParidad(valorCarta) {
+    let cartaActualParidad = null;
+
+    if (valorCarta % 2 === 0) {
+        cartaActualParidad = "par";
+    } else {
+        cartaActualParidad = "impar";
+    }
+
+    return cartaActualParidad;
+}
+
+function comprobarError(valor) {
+    if (valor.error) {
+        console.error("No se ha podido preparar la baraja",
+            valor.error
+        );
+        return true;
+    }
+}
+
+/* 4.3 Otros
+---------------*/
+
+function valorCarta(carta) {
+    if (carta.value === "JACK") return 11;
+    if (carta.value === "QUEEN") return 12;
+    if (carta.value === "KING") return 13;
+    if (carta.value === "ACE") return 1;
+
+    return Number(carta.value);
 }
 
 /* 5. JUEGO 
@@ -114,10 +162,19 @@ botonJugar.addEventListener("click", async () => {
 })
 
 botonOpcion1.addEventListener("click", () => {
-    resolverRonda("par");
+    const datosRonda = rondas[rondaActual - 1];
+
+    resolverRonda(
+        datosRonda.comprobacion,
+        datosRonda.opciones[0].toLowerCase()
+    );
 })
 
 botonOpcion2.addEventListener("click", () => {
-    resolverRonda("impar");
+    const datosRonda = rondas[rondaActual - 1];
 
+    resolverRonda(
+        datosRonda.comprobacion,
+        datosRonda.opciones[1].toLowerCase()
+    );
 })
