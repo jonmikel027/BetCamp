@@ -10,27 +10,102 @@
 <body>
     <main>
         <h1>BBK BetCamp</h1>
+
+        <section id="inicio-juego">
+
+            <label for="nombre-jugador">Nombre del jugador</label>
+            <input type="text" id="nombre-jugador" maxlength="30" placeholder="Escribe tu nombre">
+
+            <p>Saldo:
+                <span id="saldo-dinero">0</span> €
+            </p>
+            <button type="button" id="boton-jugar">Jugar</button>
+        </section>
+
+        <section id="info-juego">
+            <h2 id="titulo-juego">Blackjack</h2>
+            <p>Acércate a 21 sin pasarte y supera la puntuación de la banca.</p>
+        </section>
+
         <section id="mesa-juego">
+            <h2>Mesa de juego</h2>
 
-            <button type="button" id="empezar-juego">Jugar</button>
+            <!-- ZONA BANCA
+             ________________________ -->
 
-            <div id="carta-actual">
-                <p>Todavía no hay carta</p>
+            <div id="zona-banca">
+                <h3>Banca</h3>
+                <p>
+                    Puntos:
+                    <span id="puntos-banca">0</span>
+                </p>
+                <div id="cartas-banca">
+                    <p>Esperando el reparto...</p>
+                </div>
             </div>
+
+            <!-- PILA BARAJA
+             ________________________ -->
+
+            <div id="pila-baraja">
+                <p>Todavía no hay una baraja</p>
+            </div>
+
+            <!-- ZONA JUGADOR
+             ________________________ -->
+
+            <div id="zona-jugador">
+                <h3>Tu mano</h3>
+                <p>
+                    Puntos:
+                    <span id="puntos-jugador">0</span>
+                </p>
+                <div id="cartas-jugador">
+                    <p>Esperando el reparto...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="acciones-juego">
+            <h2>Tu turno</h2>
+
+            <p id="mensaje-juego">Pulsa «Jugar» para empezar.</p>
 
             <div>
-                <button type="button" id="predecir-mayor" disabled>Mayor</button>
-                <button type="button" id="predecir-menor" disabled>Menor</button>
+                <button type="button" id="boton-pedir" disabled>
+                    Pedir carta
+                </button>
+
+                <button type="button" id="boton-plantarse" disabled>
+                    Plantarse
+                </button>
             </div>
 
-            <p>Racha actual:
-                <span id="racha-actual">0</span>
-            </p>
-
-            <p id="estado-partida">Pulsa «Jugar» para empezar</p>
-
+            <p id="resultado-partida"></p>
         </section>
+
+        <section id="historial">
+            <h2>Historial de partidas</h2>
+
+            <label for="filtro-nombre">Buscar por nombre</label>
+            <input type="search" id="filtro-nombre" placeholder="Nombre del jugador">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Jugador</th>
+                        <th scope="col">Tus puntos</th>
+                        <th scope="col">Puntos de la banca</th>
+                        <th scope="col">Resultado</th>
+                    </tr>
+                </thead>
+
+                <tbody id="historial-resultados"></tbody>
+            </table>
+        </section>
+
     </main>
+
     <script type="module" src="js/main.js"></script>
 </body>
 

@@ -87,6 +87,7 @@ export async function robarCarta(deckID, cantidad) {
     try {
         const respuestaAPI = await fetch(urlsAPI.robarCartas(deckID, cantidad));
 
+        //comprobación con respuesta del servidor
         if (respuestaAPI.ok !== true) {
             const mensajeError = "Error HTTP: " + respuestaAPI.status;
             const error = new Error(mensajeError);
@@ -94,6 +95,15 @@ export async function robarCarta(deckID, cantidad) {
         }
 
         const datosAPI = await respuestaAPI.json();
+
+        //comprobación datos de JSON
+        if ((datosAPI.success !== true) ||
+            (!Array.isArray(datosAPI.cards)) ||
+            (datosAPI.cards.length !== cantidad)) {
+
+            throw new Error("No se han podido obtener las cartas solicitadas.");
+        }
+
         return {
             error: null,
             data: datosAPI
