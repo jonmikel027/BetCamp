@@ -12,7 +12,6 @@ const rondas = [
         descripcion: "Adivina si la carta será par o impar. El as vale 1, la jota 11, la reina 12 y el rey 13.",
         opciones: ["Par", "Impar"],
         instrucciones: "Elige una opción.",
-        comprobacion: comprobarParidad
     },
     {
         titulo: "Mayor o menor",
@@ -92,21 +91,39 @@ function mostrarRonda() {
 /* 4.2 Comprobaciones de rondas
 ---------------*/
 
-async function resolverRonda(comprobacion, prediccion) {
+async function resolverRonda(prediccion) {
+    //robar carta desde API y comprobar resultado valido
     const cartaRobadaAPI = await robarCarta(barajaJuego.deck_id, 1);
     if (comprobarError(cartaRobadaAPI)) { return; };
 
+    //asignar datos de cartas
+    const cartaAnterior = cartaActual;
     cartaActual = cartaRobadaAPI.data.cards[0];
+
     mostrarCarta(cartaActual, cartaMesa);
 
+    //traducir datos de cartas a numeros
     const valorCartaActual = valorCarta(cartaActual);
-    const resultado = comprobacion(valorCartaActual);
+    let resultado;
 
-    if (resultado === prediccion) {
-        resultadoRonda.textContent = "Genial! Seguimos jugando"
-    } else {
-        resultadoRonda.textContent = "Oh... Has fallado esta ronda"
+    //elegir tipo de comprobación segun la ronda que sea
+    if (rondaActual === 1) {
+        resultado = comprobarParidad(valorCartaActual);
     }
+    if (rondaActual === 2) {
+        const valorCartaAnterior = valorCarta(cartaAnterior);
+        resultado = comprobarMayorMenor(valorCartaAnterior, valorCartaActual);
+    }
+
+    //comprobar resultado con predicción para saber si se ha acertado
+    if (resultado === "igual") {
+        resultadoRonda.textContent = "Empate";
+    } else if (resultado === prediccion) {
+        resultadoRonda.textContent = "Genial!";
+    } else {
+        resultadoRonda.textContent = "Has fallado esta ronda";
+    }
+
 }
 
 function comprobarParidad(valorCarta) {
@@ -128,6 +145,12 @@ function comprobarError(valor) {
         );
         return true;
     }
+}
+
+function comprobarMayorMenor(valorActual, valorNuevo) {
+    if (valorNuevo === valorActual) { return "igual"; }
+    if (valorNuevo > valorActual) { return "mayor"; }
+    if (valorNuevo < valorActual) { return "menor"; }
 }
 
 /* 4.3 Otros
@@ -163,18 +186,14 @@ botonJugar.addEventListener("click", async () => {
 
 botonOpcion1.addEventListener("click", () => {
     const datosRonda = rondas[rondaActual - 1];
+    const prediccion = datosRonda.opciones[0].toLowerCase()
 
-    resolverRonda(
-        datosRonda.comprobacion,
-        datosRonda.opciones[0].toLowerCase()
-    );
+    resolverRonda(prediccion);
 })
 
 botonOpcion2.addEventListener("click", () => {
     const datosRonda = rondas[rondaActual - 1];
+    const prediccion = datosRonda.opciones[1].toLowerCase()
 
-    resolverRonda(
-        datosRonda.comprobacion,
-        datosRonda.opciones[1].toLowerCase()
-    );
+    resolverRonda(prediccion);
 })
