@@ -10,7 +10,7 @@ const urlsAPI = {
         `${urlBase}/new/shuffle/?cards=${cartas.join(",")}`,
 
     // Usar una baraja existente
-    robarCartas: (deckId, cantidad = 1) =>
+    robarCartas: (deckId, cantidad) =>
         `${urlBase}/${deckId}/draw/?count=${cantidad}`,
 
     volverABarajar: (deckId) =>
@@ -57,9 +57,35 @@ const urlsAPI = {
     reversoCarta: "https://deckofcardsapi.com/static/img/back.png"
 };
 
+
+
 export async function nuevaBaraja() {
     try {
         const respuestaAPI = await fetch(urlsAPI.nuevaBarajaBarajada);
+
+        if (respuestaAPI.ok !== true) {
+            const mensajeError = "Error HTTP: " + respuestaAPI.status;
+            const error = new Error(mensajeError);
+            throw error;
+        }
+
+        const datosAPI = await respuestaAPI.json();
+        return {
+            error: null,
+            data: datosAPI
+        }
+    }
+    catch (error) {
+        return {
+            error: error,
+            data: null
+        }
+    }
+}
+
+export async function robarCarta(deckID, cantidad) {
+    try {
+        const respuestaAPI = await fetch(urlsAPI.robarCartas(deckID, cantidad));
 
         if (respuestaAPI.ok !== true) {
             const mensajeError = "Error HTTP: " + respuestaAPI.status;
