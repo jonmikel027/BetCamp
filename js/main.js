@@ -4,31 +4,65 @@ ____________________________ */
 /* ---Dependencias---*/
 import { nuevaBaraja, robarCarta } from "./api.js";
 
+const imagenReverso = "https://deckofcardsapi.com/static/img/back.png";
+
+const rondas = [
+    {
+        titulo: "Par o impar",
+        descripcion: "Adivina si la carta será par o impar. El as vale 1, la jota 11, la reina 12 y el rey 13.",
+        opciones: ["Par", "Impar"],
+        instrucciones: "Elige una opción."
+    },
+    {
+        titulo: "Mayor o menor",
+        descripcion: "Adivina si la siguiente carta será mayor o menor que la anterior.",
+        opciones: ["Mayor", "Menor"],
+        instrucciones: "Elige una opción."
+    }
+];
 
 
 /* 2. REFERENCIAS AL HTML 
 ____________________________*/
 
-const botonEmpezarJuego = document.getElementById("empezar-juego");
-const estadoPartida = document.getElementById("estado-partida");
-const zonaCarta = document.getElementById("carta-actual");
-const botonMayor = document.getElementById("predecir-mayor");
-const botonMenor = document.getElementById("predecir-menor");
-const racha = document.getElementById("racha-actual");
+const botonJugar = document.getElementById("boton-jugar");
+const tituloJuego = document.getElementById("titulo-juego");
+const saldoDinero = document.getElementById("saldo-dinero");
 
+const numeroRondas = document.getElementById("numero-rondas");
+const nombreRonda = document.getElementById("nombre-ronda");
+const descripcionRonda = document.getElementById("descripcion-ronda");
+
+const pilaBaraja = document.getElementById("pila-baraja");
+const cartaMesa = document.getElementById("carta-mesa");
+const cartaMano = document.getElementById("carta-mano");
+
+const botonOpcion1 = document.getElementById("boton-opcion1");
+const botonOpcion2 = document.getElementById("boton-opcion2");
+const resultadoRonda = document.getElementById("resultado-ronda");
 
 
 /* 3. DATOS JUEGO
 ____________________________*/
 
 let barajaJuego = null;
-let rondasPartida = 0;
 let cartaActual = null;
-let rachaPuntos = 0;
+let cantidadRondas = rondas.length;
+let rondaActual = 0;
+let cargando = false;
 
 
 /* 4. FUNCIONES 
 ____________________________*/
+
+function mostrarPila() {
+    const reversoCarta = document.createElement("img");
+    reversoCarta.src = imagenReverso;
+    reversoCarta.alt = "Baraja boca abajo";
+
+    pilaBaraja.replaceChildren(reversoCarta);
+}
+
 function comprobarError(valor) {
     if (valor.error) {
         console.error("No se ha podido preparar la baraja",
@@ -38,97 +72,52 @@ function comprobarError(valor) {
     }
 }
 
-function mostrarCarta(carta) {
-    const imagenCarta = document.createElement("img");
-    imagenCarta.src = carta.image;
-    imagenCarta.alt = carta.value + " - " + carta.suit;
+function mostrarRonda() {
+    const datosRonda = rondas[rondaActual - 1];
 
-    zonaCarta.replaceChildren(imagenCarta);
+    numeroRondas.textContent = "Ronda: " + rondaActual + "/" + cantidadRondas;
+    nombreRonda.textContent = datosRonda.titulo;
+    descripcionRonda.textContent = datosRonda.descripcion;
+
+    botonOpcion1.textContent = datosRonda.opciones[0];
+    botonOpcion2.textContent = datosRonda.opciones[1];
+
+    resultadoRonda.textContent = datosRonda.instrucciones;
+
 }
 
-function valorCarta(carta) {
-    if (carta.value === "JACK") return 11;
-    if (carta.value === "QUEEN") return 12;
-    if (carta.value === "KING") return 13;
-    if (carta.value === "ACE") return 1;
+async function resolverRonda(prediccion) {
+    const cartaRobadaAPI = await robarCarta(barajaJuego.deck_id, 1);
+    if (comprobarError(cartaRobadaAPI)) { return; };
 
-    return Number(carta.value);
+    cartaActual = cartaRobadaAPI.data.cards[0];
+    console.log(prediccion, cartaActual);
 }
 
 /* 5. JUEGO 
 ____________________________*/
 
-botonEmpezarJuego.addEventListener("click", async () => {
+botonJugar.addEventListener("click", async () => {
 
-    if (rondasPartida === 0) {
-        const barajaAPI = await nuevaBaraja();
-        if (comprobarError(barajaAPI)) { return; }
+    const barajaAPI = await nuevaBaraja();
+    if (comprobarError(barajaAPI)) { return; };
 
-        barajaJuego = barajaAPI.data;
+    barajaJuego = barajaAPI.data;
+    mostrarPila();
 
-        const roboCarta = await robarCarta(barajaJuego.deck_id, 1);
-        if (comprobarError(roboCarta)) { return; }
+    rondaActual = 1;
+    mostrarRonda();
 
-        const cartaRobada = roboCarta.data.cards[0];
-        mostrarCarta(cartaRobada);
-        console.log(cartaRobada);
-
-        cartaActual = cartaRobada;
-
-        botonMayor.disabled = false;
-        botonMenor.disabled = false;
-
-        rondasPartida++;
-    }
+    botonOpcion1.disabled = false;
+    botonOpcion2.disabled = false;
+    botonJugar.disabled = true;
 })
 
-botonMayor.addEventListener("click", async () => {
-    const roboCarta = await robarCarta(barajaJuego.deck_id, 1);
-    if (comprobarError(roboCarta)) { return; }
-
-    const cartaRobada = roboCarta.data.cards[0];
-    mostrarCarta(cartaRobada);
-
-    const valorActual = valorCarta(cartaRobada);
-    const valorAnterior = valorCarta(cartaActual);
-
-    if (valorActual > valorAnterior) {
-        estadoPartida.textContent = "¡Correcto!";
-        rachaPuntos++;
-    } else if (valorActual < valorAnterior) {
-        estadoPartida.textContent = "Ooooh...";
-        rachaPuntos = 0;
-    } else {
-        estadoPartida.textContent = "Empate. Mantienes la racha.";
-    }
-
-    racha.textContent = rachaPuntos;
-    cartaActual = cartaRobada;
-    rondasPartida++;
+botonOpcion1.addEventListener("click", () => {
+    resolverRonda("par");
 })
 
-botonMenor.addEventListener("click", async () => {
-    const roboCarta = await robarCarta(barajaJuego.deck_id, 1);
-    if (comprobarError(roboCarta)) { return; }
+botonOpcion2.addEventListener("click", () => {
+    resolverRonda("impar");
 
-    const cartaRobada = roboCarta.data.cards[0];
-    mostrarCarta(cartaRobada);
-
-    const valorActual = valorCarta(cartaRobada);
-    const valorAnterior = valorCarta(cartaActual);
-
-    if (valorActual < valorAnterior) {
-        estadoPartida.textContent = "¡Correcto!";
-        rachaPuntos++;
-    } else if (valorActual > valorAnterior) {
-        estadoPartida.textContent = "Ooooh..."
-        rachaPuntos = 0;
-    } else {
-        estadoPartida.textContent = "Empate. Mantienes la racha.";
-    }
-    racha.textContent = rachaPuntos;
-    cartaActual = cartaRobada
-    rondasPartida++;
 })
-
-

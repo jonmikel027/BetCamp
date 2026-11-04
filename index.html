@@ -10,27 +10,64 @@
 <body>
     <main>
         <h1>BBK BetCamp</h1>
-        <section id="mesa-juego">
 
-            <button type="button" id="empezar-juego">Jugar</button>
-
-            <div id="carta-actual">
-                <p>Todavía no hay carta</p>
-            </div>
-
-            <div>
-                <button type="button" id="predecir-mayor" disabled>Mayor</button>
-                <button type="button" id="predecir-menor" disabled>Menor</button>
-            </div>
-
-            <p>Racha actual:
-                <span id="racha-actual">0</span>
+        <section id="inicio-juego">
+            <p>Saldo:
+                <span id="saldo-dinero">0</span>
+                €
             </p>
+            <button type="button" id="boton-jugar">Jugar</button>
+        </section>
 
-            <p id="estado-partida">Pulsa «Jugar» para empezar</p>
+        <section id="info-juego">
+
+            <div id="cabecera-juego">
+                <h2 id="titulo-juego">JUEGO: Pleno de 5</h2>
+                <p>Este juego se trata de adivinar y pasar por las diferentes rondas. Bla bla bla.</p>
+            </div>
+
+            <div id="info-ronda">
+                <h3 id="nombre-ronda">Nombre ronda</h3>
+                <p id="numero-rondas"></p>
+                <p id="descripcion-ronda"></p>
+            </div>
 
         </section>
+
+
+
+
+
+        <section id="mesa-juego">
+
+            <div id="pila-baraja">
+                <p>Todavía no hay una baraja</p>
+            </div>
+
+            <div id="carta-mesa">
+                <p>Todavía no hay carta en la mesa</p>
+            </div>
+
+            <div id="carta-mano">
+                <p>Todavía no tienes cartas en la mano</p>
+            </div>
+
+        </section>
+
+
+        <section id="decisiones">
+
+            <div id="opciones-ronda">
+                <button type="button" id="boton-opcion1" disabled>Mayor</button>
+                <button type="button" id="boton-opcion2" disabled>Menor</button>
+            </div>
+
+            <p id="resultado-ronda">Sin resultado</p>
+
+        </section>
+
     </main>
+
     <script type="module" src="js/main.js"></script>
 </body>
 
