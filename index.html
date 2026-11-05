@@ -90,7 +90,7 @@
 
             <label for="filtro-nombre">Buscar por nombre</label>
             <input type="search" id="filtro-nombre" placeholder="Nombre del jugador">
-            
+
             <button type="button" id="limpiar-historial">Limpiar historial</button>
 
             <table>
@@ -106,6 +106,18 @@
                 <tbody id="historial-resultados"></tbody>
             </table>
         </section>
+
+        <!-- HECHO CON IA -->
+        <dialog id="ventana-resultado" aria-labelledby="titulo-resultado">
+            <p class="etiqueta-resultado">♠ BetCamp · Fin de la mano ♠</p>
+            <h2 id="titulo-resultado"></h2>
+            <p id="detalle-resultado"></p>
+
+            <div class="acciones-resultado">
+                <button type="button" id="boton-otra-mano">Otra mano</button>
+                <button type="button" id="boton-retirarse">Retirarme de la mesa</button>
+            </div>
+        </dialog>
 
     </main>
 
