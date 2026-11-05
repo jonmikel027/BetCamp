@@ -9,25 +9,35 @@ const imagenReverso = "https://deckofcardsapi.com/static/img/back.png";
 /* 2. REFERENCIAS AL HTML
 ____________________________ */
 
+/* --- Inicio y saldo --- */
 const nombreJugador = document.getElementById("nombre-jugador");
 const saldoDinero = document.getElementById("saldo-dinero");
 const botonJugar = document.getElementById("boton-jugar");
 
+/* --- Mesa y baraja --- */
 const pilaBaraja = document.getElementById("pila-baraja");
 
+// Mano y puntos de la banca
 const zonaCartasBanca = document.getElementById("cartas-banca");
 const puntosBanca = document.getElementById("puntos-banca");
 
+// Mano y puntos del jugador
 const zonaCartasJugador = document.getElementById("cartas-jugador");
 const puntosJugador = document.getElementById("puntos-jugador");
 
+/* --- Acciones del jugador --- */
 const botonPedir = document.getElementById("boton-pedir");
 const botonPlantarse = document.getElementById("boton-plantarse");
 
+/* --- Mensajes y resultado --- */
 const mensajeJuego = document.getElementById("mensaje-juego");
 const resultadoPartida = document.getElementById("resultado-partida");
-const tablaHistorialResultados = document.getElementById("historial-resultados");
+
+/* --- Historial y búsqueda --- */
 const filtroNombre = document.getElementById("filtro-nombre");
+const tablaHistorialResultados = document.getElementById("historial-resultados");
+const botonLimpiarHistorial = document.getElementById("limpiar-historial");
+
 
 /* 3. CLASES
 ____________________________ */
@@ -42,24 +52,87 @@ class Jugador {
 
     recibirCarta(carta) {
         this.mano.push(carta);
-        this.puntos=calcularPuntos(this.mano);
-}
+        this.puntos = calcularPuntos(this.mano);
+    }
+
+    vaciarMano() {
+        this.mano = [];
+        this.puntos = calcularPuntos(this.mano);
+    }
 }
 
-/* 3. DATOS DEL JUEGO
+class Partida {
+    constructor(jugador, banca) {
+        this.jugador = jugador;
+        this.banca = banca;
+        this.participantes = [jugador, banca];
+
+        this.baraja = null;
+        this.activa = false;
+        this.resultado = null;
+    }
+
+    reiniciarManos() {
+        for (const jugador of this.participantes) {
+            jugador.vaciarMano();
+        }
+    }
+
+    iniciar(nombreJugador) {
+        this.reiniciarManos();
+
+        const nombre = nombreJugador.trim();
+
+        if (nombre === "") {
+            this.jugador.nombre = "Jugador";
+        } else {
+            this.jugador.nombre = nombre;
+        }
+
+        this.activa = false;
+        this.resultado = null;
+    }
+
+    async prepararBaraja() {
+        const barajaAPI = await nuevaBaraja();
+
+        if (barajaAPI.error) {
+            return barajaAPI;
+        }
+
+        this.baraja = barajaAPI.data;
+        return barajaAPI;
+    }
+
+    async repartoInicial() {
+        const repartoInicial = 2; //por jugador
+        const totalRoboInicial = this.participantes.length * repartoInicial;
+
+        const roboAPI = await robarCarta(this.baraja.deck_id, totalRoboInicial);
+
+        if (roboAPI.error) {
+            return roboAPI;
+        }
+
+        const roboCartasInicial = roboAPI.data.cards;
+
+        for (let i = 0; i < totalRoboInicial; i++) {
+
+            const jugadorRecibe = this.participantes[i % this.participantes.length];
+            jugadorRecibe.recibirCarta(roboCartasInicial[i]);
+        }
+        return roboAPI;
+    }
+}
+
+
+/* 4. ESTABLECER JUGADORES
 ____________________________ */
 
-const jugadores = [
-    new Jugador("jugador"),
-    new Jugador("banca")
-];
+const jugador = new Jugador("Jugador");
+const banca = new Jugador("Banca");
 
-const jugador = jugadores[0];
-const banca = jugadores[1];
-
-let barajaJuego = null;
-
-let partidaActiva = false;
+const partida = new Partida(jugador, banca);
 let cargando = false;
 
 const historialGuardado = localStorage.getItem("blackjack-historial");
@@ -69,15 +142,43 @@ if (historialGuardado !== null) {
     historialPartidas = JSON.parse(historialGuardado);
 }
 
-let resultadoFinal = null;
+/* 5. FUNCIONES
+____________________________ */
 
+function calcularValorCarta(carta) {
+    if (carta.value === "JACK") return 10;
+    if (carta.value === "QUEEN") return 10;
+    if (carta.value === "KING") return 10;
+    if (carta.value === "ACE") return 11;
 
+    return Number(carta.value);
+}
 
-/* 4. FUNCIONES 
-____________________________*/
+function calcularPuntos(mano) {
+    let total = 0;
+    let ases = 0;
 
-/* 4.1 Mostrar
---------------- */
+    for (const carta of mano) {
+        if (carta.value === "ACE") {
+            ases++;
+        }
+        total = total + calcularValorCarta(carta);
+    }
+    while ((total > 21) && (ases > 0)) {
+        total = total - 10;
+        ases--;
+    }
+    return total;
+}
+
+function comprobarErrorAPI(valor) {
+    if (valor.error) {
+        console.error("No se ha podido preparar la baraja",
+            valor.error
+        );
+        return true;
+    }
+}
 
 function mostrarPila() {
     const reversoCarta = document.createElement("img");
@@ -104,6 +205,11 @@ function mostrarMano(mano, zona) {
     }
 }
 
+function actualizarVistaMano(participante, zonaCartas, marcadorHTML) {
+    mostrarMano(participante.mano, zonaCartas);
+    marcadorHTML.textContent = participante.puntos;
+}
+
 function mostrarBanca() {   //es para el turno 1
 
     zonaCartasBanca.replaceChildren();
@@ -118,11 +224,85 @@ function mostrarBanca() {   //es para el turno 1
     puntosBanca.textContent = "?";
 }
 
+async function turnoBanca() {
+    while (banca.puntos < 17) {
+        await esperar(1000);
+
+        const roboAPI = await robarCarta(partida.baraja.deck_id, 1);
+        if (comprobarErrorAPI(roboAPI)) {
+            botonPlantarse.disabled = false;
+            return false;
+        }
+
+        const cartaRobada = roboAPI.data.cards[0];
+
+        banca.recibirCarta(cartaRobada);
+
+        actualizarVistaMano(banca, zonaCartasBanca, puntosBanca);
+
+
+    }
+    return true;
+}
+
+function esperar(milisegundos) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, milisegundos);
+    });
+}
+
+async function plantarse() {
+
+    //definir disponibilidad de la decisión
+    if ((!partida.activa) || (cargando)) {
+        return;
+    }
+
+    //Hemos decidido plantarnos
+    botonPedir.disabled = true;
+    botonPlantarse.disabled = true;
+
+    actualizarVistaMano(banca, zonaCartasBanca, puntosBanca);
+
+    //jugamos el tunro de la banca
+    mensajeJuego.textContent = "Turno de la banca.";
+
+    cargando = true;
+
+    const turnoCompletado = await turnoBanca();
+    if (turnoCompletado) {
+        resolverPartida();
+    }
+
+    cargando = false;
+}
+
+function resolverPartida() {
+    if (banca.puntos > 21 || jugador.puntos > banca.puntos) {
+        partida.resultado = "WIN";
+        resultadoPartida.textContent = "HAS GANADO";
+    } else if (jugador.puntos === banca.puntos) {
+        partida.resultado = "DRAW";
+        resultadoPartida.textContent = "HAY EMPATE";
+    } else {
+        partida.resultado = "LOSE";
+        resultadoPartida.textContent = "HAS PERDIDO";
+    }
+
+    partida.activa = false;
+    botonPedir.disabled = true;
+    botonPlantarse.disabled = true;
+    botonJugar.disabled = false;
+
+    registrarPartida()
+
+    mensajeJuego.textContent = "Partida terminada. Puedes volver a jugar.";
+}
 function mostrarHistorial() {
     tablaHistorialResultados.replaceChildren();
     const busquedaFiltrada = filtroNombre.value.trim().toLowerCase();
 
-    for (const partida of historialPartidas) {
+    for (const partida of historialPartidas.reverse()) {
         if (partida.nombre.toLowerCase().includes(busquedaFiltrada)) {
             const fila = document.createElement("tr");
 
@@ -143,139 +323,12 @@ function mostrarHistorial() {
         }
     }
 }
-
-/* 4.2 Otros
----------------*/
-
-function valorCarta(carta) {
-    if (carta.value === "JACK") return 10;
-    if (carta.value === "QUEEN") return 10;
-    if (carta.value === "KING") return 10;
-    if (carta.value === "ACE") return 11;
-
-    return Number(carta.value);
-}
-
-function comprobarError(valor) {
-    if (valor.error) {
-        console.error("No se ha podido preparar la baraja",
-            valor.error
-        );
-        return true;
-    }
-}
-
-function calcularPuntos(mano) {
-    let total = 0;
-    let ases = 0;
-
-    for (const carta of mano) {
-        if (carta.value === "ACE") {
-            ases++;
-        }
-        total = total + valorCarta(carta);
-    }
-    while ((total > 21) && (ases > 0)) {
-        total = total - 10;
-        ases--;
-    }
-    return total;
-}
-
-function actualizarPuntos(participante, marcadorHTML) {
-    participante.puntos = calcularPuntos(participante.mano);
-    marcadorHTML.textContent = participante.puntos;
-}
-
-function blackjack() {
-    jugador.puntos = calcularPuntos(jugador.mano);
-    banca.puntos = calcularPuntos(banca.mano);
-
-    return jugador.puntos === 21 || banca.puntos === 21;
-}
-
-async function turnoBanca() {
-    while (banca.puntos < 17) {
-        await esperar(1000);
-
-        const roboAPI = await robarCarta(barajaJuego.deck_id, 1);
-        if (comprobarError(roboAPI)) {
-            botonPlantarse.disabled = false;
-            return false;
-        }
-
-        const cartaRobada = roboAPI.data.cards[0];
-
-        banca.recibirCarta(cartaRobada);
-        mostrarMano(banca.mano, zonaCartasBanca)
-        actualizarPuntos(banca, puntosBanca);
-
-
-    }
-    return true;
-}
-
-function esperar(milisegundos) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, milisegundos);
-    });
-}
-
-function resolverPartida() {
-    if (banca.puntos > 21 || jugador.puntos > banca.puntos) {
-        resultadoFinal = "WIN";
-        resultadoPartida.textContent = "HAS GANADO";
-    } else if (jugador.puntos === banca.puntos) {
-        resultadoFinal = "DRAW";
-        resultadoPartida.textContent = "HAY EMPATE";
-    } else {
-        resultadoFinal = "LOSE";
-        resultadoPartida.textContent = "HAS PERDIDO";
-    }
-
-    partidaActiva = false;
-    botonPedir.disabled = true;
-    botonPlantarse.disabled = true;
-    botonJugar.disabled = false;
-
-    registrarPartida()
-
-    mensajeJuego.textContent = "Partida terminada. Puedes volver a jugar.";
-}
-
-async function plantarse() {
-
-    //definir disponibilidad de la decisión
-    if ((partidaActiva === false) || (cargando === true)) {
-        return;
-    }
-
-    //Hemos decidido plantarnos
-    botonPedir.disabled = true;
-    botonPlantarse.disabled = true;
-
-    mostrarMano(banca.mano, zonaCartasBanca);
-    actualizarPuntos(banca, puntosBanca);
-
-    //jugamos el tunro de la banca
-    mensajeJuego.textContent = "Turno de la banca.";
-
-    cargando = true;
-
-    const turnoCompletado = await turnoBanca();
-    if (turnoCompletado) {
-        resolverPartida();
-    }
-
-    cargando = false;
-}
-
 function registrarPartida() {
     const resultado = {
         nombre: jugador.nombre,
         puntosJugador: jugador.puntos,
         puntosBanca: banca.puntos,
-        resultado: resultadoFinal
+        resultado: partida.resultado
     };
 
     historialPartidas.push(resultado);
@@ -290,107 +343,77 @@ function registrarPartida() {
     console.log(historialPartidas);
 }
 
-/* 5. EVENTOS DEL JUEGO 
-____________________________*/
+/* 6. EVENTOS
+____________________________ */
 
-//5.1 NUEVA PARTIDA
+/* --- INICIAR JUEGO --- */
 botonJugar.addEventListener("click", async () => {
-    jugador.nombre = nombreJugador.value.trim();
-
-    if (jugador.nombre === "") {
-        mensajeJuego.textContent = "Escribe tu nombre para empezar.";
-        nombreJugador.focus();
-        return;
-    }
 
     botonJugar.disabled = true;
-    resultadoPartida.textContent = "";
-    resultadoFinal = null;
 
-    //conseguimos y comprobamos baraja nueva para jugar
-    const barajaAPI = await nuevaBaraja();
-    if (comprobarError(barajaAPI)) {
+    partida.iniciar(nombreJugador.value);
+
+    const barajaAPI = await partida.prepararBaraja();
+    if (comprobarErrorAPI(barajaAPI)) {
         botonJugar.disabled = false;
         return;
     }
 
-    barajaJuego = barajaAPI.data;
+    const reparto = await partida.repartoInicial();
 
-    //hacemos el robo y reparto inicial de cartas
-    const roboAPI = await robarCarta(barajaJuego.deck_id, 4);
-    if (comprobarError(roboAPI)) {
+    if (comprobarErrorAPI(reparto)) {
         botonJugar.disabled = false;
         return;
     }
 
-    const cartasRobadas = roboAPI.data.cards;
+    partida.activa = true;
 
-    //limpiamos las manos de turnos anteriores
-    for (const jugador of jugadores) {
-        jugador.mano = [];
-    }
+    mostrarPila();
 
-    /* Bucle de reparto incial. 
-     El total de cartas las repartimos entre el total de jugadores en orden */
-    for (let i = 0; i < cartasRobadas.length; i++) {
-        const jugador = jugadores[i % jugadores.length];
-       jugador.recibirCarta(cartasRobadas[i]);
-    }
+    actualizarVistaMano(jugador, zonaCartasJugador, puntosJugador);
 
-    partidaActiva = true;
+    mostrarBanca();
+
     botonPedir.disabled = false;
     botonPlantarse.disabled = false;
 
-    mostrarPila();
-    mostrarMano(jugador.mano, zonaCartasJugador);
-    actualizarPuntos(jugador, puntosJugador);
-    mostrarBanca();
-
+    resultadoPartida.textContent = "";
     mensajeJuego.textContent = "Puedes pedir una carta o plantarte.";
-
-    if (blackjack()) {
-        mostrarMano(banca.mano, zonaCartasBanca);
-        actualizarPuntos(banca, puntosBanca);
-        resolverPartida();
-    }
-
-
 })
 
-//5.2 PEDIR CARTA
+/* --- PEDIR CARTA   --- */
 botonPedir.addEventListener("click", async () => {
 
     //evitamos poder pulsar el botón varias veces o cuando no toca
-    if ((partidaActiva === false) || (cargando === true)) {
+    if (!partida.activa || cargando) {
         return;
     }
+
     //la petición está cargando
     cargando = true;
 
     //robamos la carta, comprobamos error de API y la guardamos en nuestra mano
-    const roboAPI = await robarCarta(barajaJuego.deck_id, 1);
-    if (comprobarError(roboAPI)) {
+    const roboAPI = await robarCarta(partida.baraja.deck_id, 1);
+    if (comprobarErrorAPI(roboAPI)) {
         cargando = false;
         return;
     }
 
     const cartaRobada = roboAPI.data.cards[0];
-
     jugador.recibirCarta(cartaRobada);
 
-    mostrarMano(jugador.mano, zonaCartasJugador);
-    actualizarPuntos(jugador, puntosJugador);
+    actualizarVistaMano(jugador, zonaCartasJugador, puntosJugador);
 
     //comprobamos que no nos hemos pasado de 21
     if (jugador.puntos > 21) {
-        partidaActiva = false;
-        resultadoFinal = "LOSE"
+        partida.activa = false;
+        partida.resultado = "LOSE"
 
         botonPedir.disabled = true;
         botonPlantarse.disabled = true;
 
-        mostrarMano(banca.mano, zonaCartasBanca);
-        actualizarPuntos(banca, puntosBanca);
+        actualizarVistaMano(banca, zonaCartasBanca, puntosBanca);
+
         registrarPartida();
 
 
@@ -407,15 +430,23 @@ botonPedir.addEventListener("click", async () => {
     }
 })
 
-//5.3 PLANTARSE
+/* --- PLANTARSE   --- */
 botonPlantarse.addEventListener("click", plantarse);
 
-// 5.4 FILTRAR
+/* --- FILTRAR   --- */
 filtroNombre.addEventListener("input", mostrarHistorial);
-
-
-
-/* 6. INICIO
-____________________________ */
-
 mostrarHistorial();
+
+botonLimpiarHistorial.addEventListener("click", () => {
+
+    const confirmado = confirm("¿Seguro que quieres borrar todo el historial?");
+
+    if (!confirmado) {
+        return;
+    }
+
+    historialPartidas.length = 0;
+    localStorage.removeItem("blackjack-historial");
+    filtroNombre.value = "";
+    mostrarHistorial();
+});
