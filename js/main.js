@@ -27,6 +27,7 @@ const botonPlantarse = document.getElementById("boton-plantarse");
 const mensajeJuego = document.getElementById("mensaje-juego");
 const resultadoPartida = document.getElementById("resultado-partida");
 const tablaHistorialResultados = document.getElementById("historial-resultados");
+const filtroNombre = document.getElementById("filtro-nombre");
 
 /* 3. CLASES
 ____________________________ */
@@ -34,9 +35,15 @@ ____________________________ */
 class Jugador {
     constructor(nombre) {
         this.nombre = nombre;
+        this.saldo = 0;
         this.mano = [];
         this.puntos = 0;
     }
+
+    recibirCarta(carta) {
+        this.mano.push(carta);
+        this.puntos=calcularPuntos(this.mano);
+}
 }
 
 /* 3. DATOS DEL JUEGO
@@ -55,9 +62,15 @@ let barajaJuego = null;
 let partidaActiva = false;
 let cargando = false;
 
-const historialPartidas = [];
+const historialGuardado = localStorage.getItem("blackjack-historial");
+let historialPartidas = [];
+
+if (historialGuardado !== null) {
+    historialPartidas = JSON.parse(historialGuardado);
+}
 
 let resultadoFinal = null;
+
 
 
 /* 4. FUNCIONES 
@@ -107,24 +120,27 @@ function mostrarBanca() {   //es para el turno 1
 
 function mostrarHistorial() {
     tablaHistorialResultados.replaceChildren();
+    const busquedaFiltrada = filtroNombre.value.trim().toLowerCase();
 
     for (const partida of historialPartidas) {
-        const fila = document.createElement("tr");
+        if (partida.nombre.toLowerCase().includes(busquedaFiltrada)) {
+            const fila = document.createElement("tr");
 
-        const datos = [
-            partida.nombre,
-            partida.puntosJugador,
-            partida.puntosBanca,
-            partida.resultado
-        ];
+            const datos = [
+                partida.nombre,
+                partida.puntosJugador,
+                partida.puntosBanca,
+                partida.resultado
+            ];
 
-        for (const dato of datos) {
-            const celda = document.createElement("td");
-            celda.textContent = dato;
-            fila.append(celda);
+            for (const dato of datos) {
+                const celda = document.createElement("td");
+                celda.textContent = dato;
+                fila.append(celda);
+            }
+
+            tablaHistorialResultados.append(fila);
         }
-
-        tablaHistorialResultados.append(fila);
     }
 }
 
@@ -190,7 +206,7 @@ async function turnoBanca() {
 
         const cartaRobada = roboAPI.data.cards[0];
 
-        banca.mano.push(cartaRobada);
+        banca.recibirCarta(cartaRobada);
         mostrarMano(banca.mano, zonaCartasBanca)
         actualizarPuntos(banca, puntosBanca);
 
@@ -263,6 +279,12 @@ function registrarPartida() {
     };
 
     historialPartidas.push(resultado);
+
+    localStorage.setItem(
+        "blackjack-historial",
+        JSON.stringify(historialPartidas)
+    );
+
     mostrarHistorial();
 
     console.log(historialPartidas);
@@ -312,7 +334,7 @@ botonJugar.addEventListener("click", async () => {
      El total de cartas las repartimos entre el total de jugadores en orden */
     for (let i = 0; i < cartasRobadas.length; i++) {
         const jugador = jugadores[i % jugadores.length];
-        jugador.mano.push(cartasRobadas[i]);
+       jugador.recibirCarta(cartasRobadas[i]);
     }
 
     partidaActiva = true;
@@ -336,7 +358,6 @@ botonJugar.addEventListener("click", async () => {
 })
 
 //5.2 PEDIR CARTA
-
 botonPedir.addEventListener("click", async () => {
 
     //evitamos poder pulsar el botón varias veces o cuando no toca
@@ -355,7 +376,7 @@ botonPedir.addEventListener("click", async () => {
 
     const cartaRobada = roboAPI.data.cards[0];
 
-    jugador.mano.push(cartaRobada);
+    jugador.recibirCarta(cartaRobada);
 
     mostrarMano(jugador.mano, zonaCartasJugador);
     actualizarPuntos(jugador, puntosJugador);
@@ -387,5 +408,14 @@ botonPedir.addEventListener("click", async () => {
 })
 
 //5.3 PLANTARSE
-
 botonPlantarse.addEventListener("click", plantarse);
+
+// 5.4 FILTRAR
+filtroNombre.addEventListener("input", mostrarHistorial);
+
+
+
+/* 6. INICIO
+____________________________ */
+
+mostrarHistorial();

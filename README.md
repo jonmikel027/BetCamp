@@ -13,3 +13,5 @@ vendrá jesus en corto o largos
 alguien aplaude
 
 PULSADOR
+
+poner el registro de partidas al reves
