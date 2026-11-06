@@ -38,6 +38,13 @@ const filtroNombre = document.getElementById("filtro-nombre");
 const tablaHistorialResultados = document.getElementById("historial-resultados");
 const botonLimpiarHistorial = document.getElementById("limpiar-historial");
 
+/* ---Ventana de resultado--- */
+const ventanaResultado = document.getElementById("ventana-resultado");
+const tituloResultado = document.getElementById("titulo-resultado");
+const detalleResultado = document.getElementById("detalle-resultado");
+const botonOtraMano = document.getElementById("boton-otra-mano");
+const botonRetirarse = document.getElementById("boton-retirarse");
+
 
 /* 3. CLASES
 ____________________________ */
@@ -226,6 +233,7 @@ function mostrarBanca() {   //es para el turno 1
 
 async function turnoBanca() {
     while (banca.puntos < 17) {
+        mensajeJuego.textContent = "La banca pide carta.";
         await esperar(1000);
 
         const roboAPI = await robarCarta(partida.baraja.deck_id, 1);
@@ -265,7 +273,7 @@ async function plantarse() {
     actualizarVistaMano(banca, zonaCartasBanca, puntosBanca);
 
     //jugamos el tunro de la banca
-    mensajeJuego.textContent = "Turno de la banca.";
+    mensajeJuego.textContent = "La banca descubre su juego.";
 
     cargando = true;
 
@@ -277,16 +285,28 @@ async function plantarse() {
     cargando = false;
 }
 
+function mostrarVentanaResultado(titulo, detalle) {
+    tituloResultado.textContent = titulo;
+    detalleResultado.textContent = detalle;
+    ventanaResultado.showModal();
+}
+
 function resolverPartida() {
+    let titulo;
+    let detalle;
+
     if (banca.puntos > 21 || jugador.puntos > banca.puntos) {
         partida.resultado = "WIN";
-        resultadoPartida.textContent = "HAS GANADO";
+        titulo = "¡Te llevas la mano!";
+        detalle = "Tu jugada se impone. La banca cede.";
     } else if (jugador.puntos === banca.puntos) {
         partida.resultado = "DRAW";
-        resultadoPartida.textContent = "HAY EMPATE";
+        titulo = "Tablas en la mesa";
+        detalle = "Misma puntuación. La mano queda en tablas.";
     } else {
         partida.resultado = "LOSE";
-        resultadoPartida.textContent = "HAS PERDIDO";
+        titulo = "La banca gana";
+        detalle = "Esta mano se la lleva la casa.";
     }
 
     partida.activa = false;
@@ -294,10 +314,10 @@ function resolverPartida() {
     botonPlantarse.disabled = true;
     botonJugar.disabled = false;
 
-    registrarPartida()
-
-    mensajeJuego.textContent = "Partida terminada. Puedes volver a jugar.";
+    registrarPartida();
+    mostrarVentanaResultado(titulo, detalle);
 }
+
 function mostrarHistorial() {
     tablaHistorialResultados.replaceChildren();
     const busquedaFiltrada = filtroNombre.value.trim().toLowerCase();
@@ -343,6 +363,13 @@ function registrarPartida() {
     console.log(historialPartidas);
 }
 
+function blackjack() {
+    if (jugador.puntos === 21 || banca.puntos === 21) {
+        return true;
+    }
+
+    return false;
+}
 /* 6. EVENTOS
 ____________________________ */
 
@@ -352,6 +379,8 @@ botonJugar.addEventListener("click", async () => {
     botonJugar.disabled = true;
 
     partida.iniciar(nombreJugador.value);
+
+    mensajeJuego.textContent = "Señoras y señores, se reparten las cartas.";
 
     const barajaAPI = await partida.prepararBaraja();
     if (comprobarErrorAPI(barajaAPI)) {
@@ -369,8 +398,15 @@ botonJugar.addEventListener("click", async () => {
     partida.activa = true;
 
     mostrarPila();
-
     actualizarVistaMano(jugador, zonaCartasJugador, puntosJugador);
+
+    if (blackjack()) {
+        actualizarVistaMano(banca, zonaCartasBanca, puntosBanca);
+        resolverPartida();
+        return;
+    }
+
+    mensajeJuego.textContent = "La mesa es tuya. ¿Carta o te plantas?";
 
     mostrarBanca();
 
@@ -378,7 +414,6 @@ botonJugar.addEventListener("click", async () => {
     botonPlantarse.disabled = false;
 
     resultadoPartida.textContent = "";
-    mensajeJuego.textContent = "Puedes pedir una carta o plantarte.";
 })
 
 /* --- PEDIR CARTA   --- */
@@ -391,6 +426,8 @@ botonPedir.addEventListener("click", async () => {
 
     //la petición está cargando
     cargando = true;
+
+    mensajeJuego.textContent = "Una carta más para ti.";
 
     //robamos la carta, comprobamos error de API y la guardamos en nuestra mano
     const roboAPI = await robarCarta(partida.baraja.deck_id, 1);
@@ -416,8 +453,10 @@ botonPedir.addEventListener("click", async () => {
 
         registrarPartida();
 
-
-        resultadoPartida.textContent = "Te has pasado de 21. Has perdido.";
+        mostrarVentanaResultado(
+            "¡Te has pasado!",
+            "La última carta te lleva por encima de 21. La mano es de la casa."
+        );
         mensajeJuego.textContent = "Partida terminada. Puedes volver a jugar.";
         botonJugar.disabled = false;
     }
@@ -449,4 +488,16 @@ botonLimpiarHistorial.addEventListener("click", () => {
     localStorage.removeItem("blackjack-historial");
     filtroNombre.value = "";
     mostrarHistorial();
+});
+
+/* --- VENTANA FINAL DE MANO   --- */
+
+botonOtraMano.addEventListener("click", () => {
+    ventanaResultado.close();
+    botonJugar.click();
+});
+
+botonRetirarse.addEventListener("click", () => {
+    ventanaResultado.close();
+    botonJugar.focus();
 });
