@@ -49,6 +49,9 @@ const botonRetirarse = document.getElementById("boton-retirarse");
 /* 3. CLASES
 ____________________________ */
 
+/* Jugador y banca reciben cartas, calculan puntos y juegan con mano,
+ por eos son misma clase*/
+
 class Jugador {
     constructor(nombre) {
         this.nombre = nombre;
@@ -72,7 +75,7 @@ class Partida {
     constructor(jugador, banca) {
         this.jugador = jugador;
         this.banca = banca;
-        this.participantes = [jugador, banca];
+        this.participantes = [jugador, banca]; //El orden del array marca el orden del reparto. El jugador primero.
 
         this.baraja = null;
         this.activa = false;
@@ -86,6 +89,7 @@ class Partida {
     }
 
     iniciar(nombreJugador) {
+
         this.reiniciarManos();
 
         const nombre = nombreJugador.trim();
@@ -101,6 +105,10 @@ class Partida {
     }
 
     async prepararBaraja() {
+        /* Se guarda la baraja en this.baraja para usar su deck_id en los robos. 
+            Se devuelve la respuesta de la API para que quien llame a la función,
+            pueda comprobar si hubo un error. */
+
         const barajaAPI = await nuevaBaraja();
 
         if (barajaAPI.error) {
@@ -125,6 +133,9 @@ class Partida {
 
         for (let i = 0; i < totalRoboInicial; i++) {
 
+            /* El resto de la división (%) hace que el índice de los participantes vaya 0, 1, 0, 1. 
+            Así las cartas se reparten por turnos. */
+
             const jugadorRecibe = this.participantes[i % this.participantes.length];
             jugadorRecibe.recibirCarta(roboCartasInicial[i]);
         }
@@ -142,6 +153,10 @@ const banca = new Jugador("Banca");
 const partida = new Partida(jugador, banca);
 let cargando = false;
 
+
+/* Al abrir la página, recuperamos las partidas guardadas en un array para poder mostrarlas y añadir nuevas. 
+Si aún no hay historial, empezamos con el array vacío. */
+
 const historialGuardado = localStorage.getItem("blackjack-historial");
 let historialPartidas = [];
 
@@ -151,6 +166,8 @@ if (historialGuardado !== null) {
 
 /* 5. FUNCIONES
 ____________________________ */
+
+//---Puntuación---
 
 function calcularValorCarta(carta) {
     if (carta.value === "JACK") return 10;
@@ -171,6 +188,8 @@ function calcularPuntos(mano) {
         }
         total = total + calcularValorCarta(carta);
     }
+
+    /* si te has pasado de 21 pero tienes ases, el As pasa a valer 1 */
     while ((total > 21) && (ases > 0)) {
         total = total - 10;
         ases--;
@@ -178,14 +197,16 @@ function calcularPuntos(mano) {
     return total;
 }
 
-function comprobarErrorAPI(valor) {
-    if (valor.error) {
-        console.error("No se ha podido preparar la baraja",
-            valor.error
-        );
+function blackjack() {
+    if (jugador.puntos === 21 || banca.puntos === 21) {
         return true;
     }
+
+    return false;
 }
+
+
+//---Vista de la mesa y aviso---
 
 function mostrarPila() {
     const reversoCarta = document.createElement("img");
@@ -228,36 +249,20 @@ function mostrarBanca() {   //es para el turno 1
     cartaOculta.alt = "Carta oculta de la banca";
 
     zonaCartasBanca.append(cartaOculta);
-    puntosBanca.textContent = "?";
+    puntosBanca.textContent = "¿?";
 }
 
-async function turnoBanca() {
-    while (banca.puntos < 17) {
-        mensajeJuego.textContent = "La banca pide carta.";
-        await esperar(1000);
+function mostrarVentanaResultado(titulo, detalle) {
+    mensajeJuego.textContent = "La mesa está abierta. ¿Jugamos?";
+    tituloResultado.textContent = titulo;
+    detalleResultado.textContent = detalle;
 
-        const roboAPI = await robarCarta(partida.baraja.deck_id, 1);
-        if (comprobarErrorAPI(roboAPI)) {
-            botonPlantarse.disabled = false;
-            return false;
-        }
-
-        const cartaRobada = roboAPI.data.cards[0];
-
-        banca.recibirCarta(cartaRobada);
-
-        actualizarVistaMano(banca, zonaCartasBanca, puntosBanca);
-
-
-    }
-    return true;
+    //abre una ventana modal. (Muestra por encima y bloquea resto de la página)
+    ventanaResultado.showModal();
 }
 
-function esperar(milisegundos) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, milisegundos);
-    });
-}
+
+//---Turnos y cierre de la mano---
 
 async function plantarse() {
 
@@ -266,7 +271,7 @@ async function plantarse() {
         return;
     }
 
-    //Hemos decidido plantarnos
+    //Ya no se puede de elegir ninguna opción
     botonPedir.disabled = true;
     botonPlantarse.disabled = true;
 
@@ -285,27 +290,53 @@ async function plantarse() {
     cargando = false;
 }
 
-function mostrarVentanaResultado(titulo, detalle) {
-    tituloResultado.textContent = titulo;
-    detalleResultado.textContent = detalle;
-    ventanaResultado.showModal();
+async function turnoBanca() {
+    while (banca.puntos < 17) {
+
+        /* Mientras tenga 17 o menos roba obligatoriamente.
+        Comprobamos que el robo no ha dado error.
+        Metemos la carta robada y recalculamos los puntos. */
+
+        mensajeJuego.textContent = "La banca pide carta.";
+        await esperar(1000);
+
+        const roboAPI = await robarCarta(partida.baraja.deck_id, 1);
+        if (comprobarErrorAPI(roboAPI)) {
+            botonPlantarse.disabled = false;
+            return false;
+        }
+
+        const cartaRobada = roboAPI.data.cards[0];
+
+        banca.recibirCarta(cartaRobada);
+
+        actualizarVistaMano(banca, zonaCartasBanca, puntosBanca);
+    }
+    return true;
 }
 
 function resolverPartida() {
     let titulo;
     let detalle;
 
-    if (banca.puntos > 21 || jugador.puntos > banca.puntos) {
+    if (jugador.mano.length === 2 && jugador.puntos === 21 && banca.puntos !== 21) {
+        partida.resultado = "BLACKJACK";
+        titulo = "¡Blackjack!";
+        detalle = "21 de salida. Te llevas la mano.";
+
+    } else if (banca.puntos > 21 || jugador.puntos > banca.puntos) {
         partida.resultado = "WIN";
-        titulo = "¡Te llevas la mano!";
-        detalle = "Tu jugada se impone. La banca cede.";
+        titulo = "¡Tú ganas!";
+        detalle = "La mano es tuya, vences a la banca";
+
     } else if (jugador.puntos === banca.puntos) {
         partida.resultado = "DRAW";
         titulo = "Tablas en la mesa";
         detalle = "Misma puntuación. La mano queda en tablas.";
+
     } else {
         partida.resultado = "LOSE";
-        titulo = "La banca gana";
+        titulo = "Gana la banca";
         detalle = "Esta mano se la lleva la casa.";
     }
 
@@ -318,13 +349,39 @@ function resolverPartida() {
     mostrarVentanaResultado(titulo, detalle);
 }
 
+
+//---Historial---
+
+function registrarPartida() {
+    const resultado = {
+        nombre: jugador.nombre,
+        puntosJugador: jugador.puntos,
+        puntosBanca: banca.puntos,
+        resultado: partida.resultado
+    };
+
+    historialPartidas.push(resultado);
+
+    /* Convertimos el historial a texto para guardarlo y recuperarlo al recargar la página. */
+    localStorage.setItem(
+        "blackjack-historial",
+        JSON.stringify(historialPartidas)
+    );
+
+    mostrarHistorial();
+}
+
 function mostrarHistorial() {
+
+    //Limpiamos la tabla. La vamos a rellenar otra vez.
     tablaHistorialResultados.replaceChildren();
     const busquedaFiltrada = filtroNombre.value.trim().toLowerCase();
 
     for (const partida of historialPartidas.reverse()) {
+
+        //Filtrar por nombre
         if (partida.nombre.toLowerCase().includes(busquedaFiltrada)) {
-            const fila = document.createElement("tr");
+            const filaTablaRegistro = document.createElement("tr");
 
             const datos = [
                 partida.nombre,
@@ -336,40 +393,32 @@ function mostrarHistorial() {
             for (const dato of datos) {
                 const celda = document.createElement("td");
                 celda.textContent = dato;
-                fila.append(celda);
+                filaTablaRegistro.append(celda);
             }
 
-            tablaHistorialResultados.append(fila);
+            tablaHistorialResultados.append(filaTablaRegistro);
         }
     }
 }
-function registrarPartida() {
-    const resultado = {
-        nombre: jugador.nombre,
-        puntosJugador: jugador.puntos,
-        puntosBanca: banca.puntos,
-        resultado: partida.resultado
-    };
 
-    historialPartidas.push(resultado);
+//---Otros---
 
-    localStorage.setItem(
-        "blackjack-historial",
-        JSON.stringify(historialPartidas)
-    );
-
-    mostrarHistorial();
-
-    console.log(historialPartidas);
-}
-
-function blackjack() {
-    if (jugador.puntos === 21 || banca.puntos === 21) {
+function comprobarErrorAPI(valor) {
+    if (valor.error) {
+        console.error("No se ha podido preparar la baraja",
+            valor.error
+        );
         return true;
     }
-
-    return false;
 }
+
+function esperar(milisegundos) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, milisegundos);
+    });
+}
+
+
 /* 6. EVENTOS
 ____________________________ */
 
@@ -427,7 +476,10 @@ botonPedir.addEventListener("click", async () => {
     //la petición está cargando
     cargando = true;
 
+    //comentarios crupier
     mensajeJuego.textContent = "Una carta más para ti.";
+    esperar(2000);
+    mensajeJuego.textContent = "La mesa es tuya. ¿Carta o te plantas?";
 
     //robamos la carta, comprobamos error de API y la guardamos en nuestra mano
     const roboAPI = await robarCarta(partida.baraja.deck_id, 1);
@@ -457,7 +509,6 @@ botonPedir.addEventListener("click", async () => {
             "¡Te has pasado!",
             "La última carta te lleva por encima de 21. La mano es de la casa."
         );
-        mensajeJuego.textContent = "Partida terminada. Puedes volver a jugar.";
         botonJugar.disabled = false;
     }
 
@@ -476,6 +527,8 @@ botonPlantarse.addEventListener("click", plantarse);
 filtroNombre.addEventListener("input", mostrarHistorial);
 mostrarHistorial();
 
+/* --- LIMPIAR HISTORIAL   --- */
+
 botonLimpiarHistorial.addEventListener("click", () => {
 
     const confirmado = confirm("¿Seguro que quieres borrar todo el historial?");
@@ -490,7 +543,7 @@ botonLimpiarHistorial.addEventListener("click", () => {
     mostrarHistorial();
 });
 
-/* --- VENTANA FINAL DE MANO   --- */
+/* --- VENTANA FINAL DE JUEGO   --- */
 
 botonOtraMano.addEventListener("click", () => {
     ventanaResultado.close();
@@ -501,3 +554,24 @@ botonRetirarse.addEventListener("click", () => {
     ventanaResultado.close();
     botonJugar.focus();
 });
+
+/* --- PONER MÚSICA   --- */
+
+const avisoMusica = document.querySelector("#aviso-musica");
+const musicaCasino = document.querySelector("#musica-casino");
+
+document.querySelector("#aceptar-musica").addEventListener("click", () => {
+    musicaCasino.volume = 0.3;
+    musicaCasino.play().catch((error) => {
+        console.warn("No se pudo reproducir la música:", error);
+    });
+    avisoMusica.close();
+});
+
+document.querySelector("#rechazar-musica").addEventListener("click", () => {
+    avisoMusica.close();
+});
+
+avisoMusica.showModal();
+
+console.log(new URL("assets/images/favicon.svg", location.href).href);

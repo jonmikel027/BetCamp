@@ -4,32 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BBK BetCamp</title>
+    <title>BBK BetCamp | Blackjack</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2">
 </head>
 
 <body>
     <main>
-        <h1>BBK BetCamp</h1>
+        <h1>
+            <img class="logo-betcamp" src="assets/images/logo-bbk-betcamp.png" alt="BBK BetCamp">
+        </h1>
 
         <section id="inicio-juego">
 
-            <label for="nombre-jugador">Nombre del jugador</label>
+            <label for="nombre-jugador">¿A nombre de quién es la mano?</label>
             <input type="text" id="nombre-jugador" maxlength="30" placeholder="Escribe tu nombre">
 
-            <p>Saldo:
+            <!--   <p>Saldo:
                 <span id="saldo-dinero">0</span> €
-            </p>
-            <button type="button" id="boton-jugar">Jugar</button>
+            </p> -->
+
+            <button type="button" id="boton-jugar">Repartir cartas</button>
         </section>
 
         <section id="info-juego">
             <h2 id="titulo-juego">Blackjack</h2>
-            <p>Acércate a 21 sin pasarte y supera la puntuación de la banca.</p>
+            <p>Acércate a 21 sin pasarte y supera a la banca. Si la banca se pasa y tú sigues en juego, te llevas la
+                mano.</p>
         </section>
 
         <section id="mesa-juego">
-            <h2>Mesa de juego</h2>
+            <h2>Mesa de Blackjack</h2>
 
             <!-- ZONA BANCA
              ________________________ -->
@@ -41,7 +46,7 @@
                     <span id="puntos-banca">0</span>
                 </p>
                 <div id="cartas-banca">
-                    <p>Esperando el reparto...</p>
+                    <p>La banca espera el reparto.</p>
                 </div>
             </div>
 
@@ -49,7 +54,7 @@
              ________________________ -->
 
             <div id="pila-baraja">
-                <p>Todavía no hay una baraja</p>
+                <p>Baraja pendiente de preparar.</p>
             </div>
 
             <!-- ZONA JUGADOR
@@ -62,15 +67,30 @@
                     <span id="puntos-jugador">0</span>
                 </p>
                 <div id="cartas-jugador">
-                    <p>Esperando el reparto...</p>
+                    <p>Tus cartas se sirven aquí.</p>
                 </div>
             </div>
         </section>
 
-        <section id="acciones-juego">
-            <h2>Tu turno</h2>
 
-            <p id="mensaje-juego">Pulsa «Jugar» para empezar.</p>
+        <!-- ACCIONES PEDIR-RETIRARSE
+             ________________________ -->
+
+        <section id="acciones-juego">
+            <h2>Tu jugada</h2>
+
+            <!-- Crupier dinamico -->
+
+            <div class="crupier">
+                <!--                 <img class="crupier__imagen" src="/assets/images/crupier" alt="">
+ -->
+                <div class="crupier__bocadillo">
+                    <strong>Crupier</strong>
+                    <p id="mensaje-juego">La mesa está abierta. ¿Jugamos?</p>
+                </div>
+            </div>
+
+            <!-- Botones -->
 
             <div>
                 <button type="button" id="boton-pedir" disabled>
@@ -85,19 +105,27 @@
             <p id="resultado-partida"></p>
         </section>
 
-        <section id="historial">
-            <h2>Historial de partidas</h2>
 
-            <label for="filtro-nombre">Buscar por nombre</label>
+        <!-- HISTORIAL DE PARTIDAS
+             ________________________ -->
+
+        <section id="historial">
+            <h2>Registro de la mesa</h2>
+
+            <!-- Filtro de busqueda -->
+
+            <label for="filtro-nombre">Buscar manos por jugador</label>
             <input type="search" id="filtro-nombre" placeholder="Nombre del jugador">
 
             <button type="button" id="limpiar-historial">Limpiar historial</button>
+
+            <!-- Tabla -->
 
             <table>
                 <thead>
                     <tr>
                         <th scope="col">Jugador</th>
-                        <th scope="col">Tus puntos</th>
+                        <th scope="col">Puntos del jugador</th>
                         <th scope="col">Puntos de la banca</th>
                         <th scope="col">Resultado</th>
                     </tr>
@@ -107,7 +135,9 @@
             </table>
         </section>
 
-        <!-- HECHO CON IA -->
+        <!-- VENTANA FINAL
+             ________________________ -->
+
         <dialog id="ventana-resultado" aria-labelledby="titulo-resultado">
             <p class="etiqueta-resultado">♠ BetCamp · Fin de la mano ♠</p>
             <h2 id="titulo-resultado"></h2>
@@ -115,11 +145,26 @@
 
             <div class="acciones-resultado">
                 <button type="button" id="boton-otra-mano">Otra mano</button>
-                <button type="button" id="boton-retirarse">Retirarme de la mesa</button>
+                <button type="button" id="boton-retirarse">Dejar la mesa</button>
             </div>
         </dialog>
 
     </main>
+
+    <!-- MUSICA
+             ________________________ -->
+
+    <audio id="musica-casino" src="assets/audio/casino.mp3" loop preload="none"></audio>
+
+    <dialog id="aviso-musica" aria-labelledby="titulo-aviso-musica">
+        <h2 id="titulo-aviso-musica">Bienvenido a BetCamp</h2>
+        <p>¿Un poco de música para la partida?</p>
+
+        <div class="acciones-resultado">
+            <button type="button" id="aceptar-musica">Poner música</button>
+            <button type="button" id="rechazar-musica" autofocus>Jugar sin música</button>
+        </div>
+    </dialog>
 
     <script type="module" src="js/main.js"></script>
 </body>

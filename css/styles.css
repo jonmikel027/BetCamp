@@ -1,5 +1,4 @@
-/* BASE
-____________________________ */
+/* 1. Colores, tipografía y estructura */
 
 :root {
     --fondo: #101512;
@@ -21,18 +20,14 @@ body {
     min-height: 100vh;
     font-family: Arial, sans-serif;
     color: var(--texto);
-    background: radial-gradient(
-        ellipse at top,
-        #293b2d,
-        var(--fondo) 70%
-    );
+    background: radial-gradient(ellipse at top, #293b2d, var(--fondo) 70%);
 }
 
 main {
-    max-width: 1150px;
+    max-width: 1240px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 250px;
+    grid-template-columns: minmax(0, 1fr) 280px;
     gap: 18px;
 }
 
@@ -43,21 +38,23 @@ p {
     margin: 0;
 }
 
-h1 {
-    grid-column: 1 / -1;
-    padding: 8px 0;
-    font-family: Georgia, serif;
-    font-size: clamp(30px, 5vw, 48px);
-    letter-spacing: 3px;
-    text-align: center;
-    color: var(--dorado);
-    text-shadow: 0 3px 12px #000000;
-}
-
+h1,
 h2,
 h3 {
     font-family: Georgia, serif;
 }
+
+h1 {
+    grid-column: 1 / -1;
+    padding: 8px 0;
+    font-size: clamp(30px, 5vw, 48px);
+    letter-spacing: 3px;
+    text-align: center;
+    color: var(--dorado);
+    text-shadow: 0 3px 12px #000;
+}
+
+/* 2. Botones y campos */
 
 button,
 input {
@@ -73,9 +70,7 @@ button {
     background: linear-gradient(#f2d797, #c79d4b);
     box-shadow: 0 4px 0 #745725;
     cursor: pointer;
-    transition:
-        transform 150ms,
-        filter 150ms;
+    transition: transform 150ms, filter 150ms;
 }
 
 button:hover:not(:disabled) {
@@ -114,9 +109,32 @@ input:focus-visible {
     outline-offset: 4px;
 }
 
+#boton-jugar {
+    min-width: 110px;
+}
 
-/* INICIO Y SALDO
-____________________________ */
+#boton-jugar:enabled {
+    border-color: #ffd983;
+    background: linear-gradient(#a82b49, #761731);
+    color: #fff1c6;
+    box-shadow: 0 4px 0 #48101f;
+}
+
+#boton-plantarse {
+    color: var(--texto);
+    border-color: #c07570;
+    background: linear-gradient(#9d3939, #682020);
+    box-shadow: 0 4px 0 #3c1111;
+}
+
+#boton-retirarse {
+    border-color: #d97575;
+    background: linear-gradient(#ad3737, #731d1d);
+    color: #fff;
+    box-shadow: 0 4px 0 #401010;
+}
+
+/* 3. Inicio y presentación del juego */
 
 #inicio-juego {
     grid-column: 1 / -1;
@@ -137,28 +155,10 @@ ____________________________ */
     font-size: 14px;
 }
 
-#inicio-juego p {
-    padding: 10px 16px;
-    border: 1px solid #786337;
-    border-radius: 30px;
-    background: #101712;
-    white-space: nowrap;
-}
-
-#saldo-dinero {
-    font-size: 20px;
-    font-weight: bold;
-    color: var(--dorado);
-}
-
-#boton-jugar {
-    min-width: 110px;
-}
-
 #info-juego {
-    grid-column: 1 / -1;
     padding: 0 8px;
-    text-align: center;
+    text-align: left;
+    align-self: end;
 }
 
 #titulo-juego {
@@ -172,43 +172,29 @@ ____________________________ */
     line-height: 1.5;
 }
 
-
-/* MESA DE BLACKJACK
-____________________________ */
+/* 4. Tapete, baraja y manos */
 
 #mesa-juego {
     position: relative;
     min-width: 0;
     display: grid;
-    grid-template-columns: 105px minmax(0, 1fr);
+    grid-template-columns: 120px minmax(0, 1fr);
     grid-template-areas:
-        "titulo titulo"
         "pila banca"
         "pila jugador";
     gap: 14px;
-    padding: 22px;
-
+    padding: 26px;
     border: 10px solid #48301f;
     border-radius: 65px;
-    background: radial-gradient(
-        ellipse at center,
-        var(--tapete),
-        var(--tapete-oscuro)
-    );
-
+    background: radial-gradient(ellipse at center, var(--tapete), var(--tapete-oscuro));
     box-shadow:
         inset 0 0 0 2px var(--dorado),
         inset 0 0 45px #00000050,
         0 12px 30px #00000060;
 }
 
-#mesa-juego > h2 {
-    grid-area: titulo;
-    text-align: center;
-    text-transform: uppercase;
-    font-size: 15px;
-    letter-spacing: 4px;
-    color: #ead4a0;
+#mesa-juego>h2 {
+    display: none;
 }
 
 #pila-baraja {
@@ -222,8 +208,8 @@ ____________________________ */
 #pila-baraja img {
     transform: rotate(-8deg);
     box-shadow:
-        3px 3px 0 #dddddd,
-        6px 6px 0 #777777,
+        3px 3px 0 #ddd,
+        6px 6px 0 #777,
         10px 12px 15px #00000060;
 }
 
@@ -252,8 +238,8 @@ ____________________________ */
     color: #f0d69b;
 }
 
-#zona-banca > p,
-#zona-jugador > p {
+#zona-banca>p,
+#zona-jugador>p {
     display: inline-block;
     padding: 5px 14px;
     border-radius: 20px;
@@ -269,7 +255,7 @@ ____________________________ */
 
 #cartas-banca,
 #cartas-jugador {
-    min-height: 145px;
+    min-height: 165px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -280,24 +266,22 @@ ____________________________ */
 
 #mesa-juego img {
     display: block;
-    width: 82px;
+    width: 100px;
     max-width: 100%;
     height: auto;
     border-radius: 5px;
     box-shadow: 0 5px 10px #00000060;
 }
 
-#cartas-banca > p,
-#cartas-jugador > p,
-#pila-baraja > p {
+#cartas-banca>p,
+#cartas-jugador>p,
+#pila-baraja>p {
     font-size: 14px;
     line-height: 1.5;
     color: #d3dfcc;
 }
 
-
-/* ACCIONES Y RESULTADO
-____________________________ */
+/* 5. Turno del jugador y crupier */
 
 #acciones-juego {
     align-self: start;
@@ -314,26 +298,6 @@ ____________________________ */
     color: var(--dorado);
 }
 
-#mensaje-juego {
-    min-height: 65px;
-    margin-bottom: 20px;
-    line-height: 1.6;
-    color: var(--texto-suave);
-}
-
-#acciones-juego > div {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-#boton-plantarse {
-    color: var(--texto);
-    border-color: #c07570;
-    background: linear-gradient(#9d3939, #682020);
-    box-shadow: 0 4px 0 #3c1111;
-}
-
 #resultado-partida {
     margin-top: 24px;
     font-size: 23px;
@@ -348,9 +312,48 @@ ____________________________ */
     margin-top: 0;
 }
 
+#acciones-juego>.crupier {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
 
-/* HISTORIAL
-____________________________ */
+.crupier__imagen {
+    display: block;
+    width: 140px;
+    max-width: 100%;
+    height: auto;
+}
+
+.crupier__bocadillo {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--dorado);
+    border-radius: 12px;
+    background: #101712;
+}
+
+.crupier__bocadillo strong {
+    color: var(--dorado);
+}
+
+.crupier__bocadillo #mensaje-juego {
+    min-height: 0;
+    margin: 4px 0 0;
+    font-size: 19px;
+    line-height: 1.4;
+    color: var(--texto);
+}
+
+#acciones-juego>div:not(.crupier) {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* 6. Historial */
 
 #historial {
     grid-column: 1 / -1;
@@ -404,9 +407,68 @@ tbody tr:hover {
     background: #dcb86b12;
 }
 
+/* 7. Avisos de resultado y música */
 
-/* RESPONSIVE
-____________________________ */
+#ventana-resultado,
+#aviso-musica {
+    width: min(640px, calc(100% - 24px));
+    max-height: calc(100% - 24px);
+    padding: clamp(22px, 5vw, 42px);
+    border: 2px solid var(--dorado);
+    border-radius: 18px;
+    background: var(--panel);
+    color: var(--texto);
+    text-align: center;
+    box-shadow: 0 14px 50px #0009;
+}
+
+#ventana-resultado::backdrop,
+#aviso-musica::backdrop {
+    background: rgb(0 0 0 / 75%);
+}
+
+#titulo-resultado,
+#titulo-aviso-musica {
+    margin: 12px 0;
+    font-size: clamp(30px, 6vw, 48px);
+    color: var(--dorado);
+}
+
+#detalle-resultado {
+    font-size: clamp(17px, 3vw, 21px);
+    line-height: 1.5;
+}
+
+.acciones-resultado {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+/* 8. Distribución de escritorio y móvil */
+
+@media (min-width: 751px) {
+    main {
+        grid-template-rows: auto auto auto 1fr auto;
+    }
+
+    #mesa-juego {
+        grid-column: 1;
+        grid-row: 3 / 5;
+    }
+
+    #info-juego {
+        grid-column: 2;
+        grid-row: 3;
+    }
+
+    #acciones-juego {
+        grid-column: 2;
+        grid-row: 4;
+    }
+}
 
 @media (max-width: 750px) {
     body {
@@ -419,6 +481,7 @@ ____________________________ */
     }
 
     #mesa-juego {
+        grid-row: 3;
         grid-template-columns: 70px minmax(0, 1fr);
         padding: 16px;
         border-width: 7px;
@@ -426,8 +489,12 @@ ____________________________ */
         gap: 10px;
     }
 
-    #mesa-juego img {
-        width: 65px;
+    #info-juego {
+        grid-row: 4;
+    }
+
+    #acciones-juego {
+        grid-row: 5;
     }
 
     #zona-banca,
@@ -438,11 +505,20 @@ ____________________________ */
 
     #cartas-banca,
     #cartas-jugador {
-        min-height: 120px;
+        min-height: 135px;
         gap: 6px;
     }
 
-    #acciones-juego > div {
+    #pila-baraja img {
+        width: 58px;
+    }
+
+    #cartas-banca img,
+    #cartas-jugador img {
+        width: clamp(62px, 18vw, 90px);
+    }
+
+    #acciones-juego>div:not(.crupier) {
         flex-direction: row;
         flex-wrap: wrap;
     }
@@ -451,13 +527,46 @@ ____________________________ */
         flex: 1;
     }
 
-    #mensaje-juego {
-        min-height: 0;
-        margin-bottom: 16px;
-    }
-
     #historial {
         padding: 16px;
+    }
+}
+
+.logo-betcamp {
+    display: block;
+    width: 100%;
+    max-width: 620px;
+    aspect-ratio: 5 / 1;
+    object-fit: cover;
+    margin: 0 auto;
+}
+
+/* 9. Pulso del botón disponible y preferencia de movimiento */
+
+@keyframes pulso-jugar {
+
+    0%,
+    100% {
+        scale: 1;
+        box-shadow: 0 4px 0 #48101f, 0 0 5px #ffbc6166;
+    }
+
+    50% {
+        scale: 1.09;
+        box-shadow: 0 4px 0 #48101f, 0 0 19px #ffbc61cc;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+    #ventana-resultado[open] #boton-otra-mano:enabled,
+    #boton-jugar:enabled {
+        animation: pulso-jugar 1.6s ease-in-out infinite;
+    }
+
+    /* Detiene el pulso de Jugar mientras haya un aviso abierto. */
+    body:has(#ventana-resultado[open], #aviso-musica[open]) #boton-jugar {
+        animation: none;
     }
 }
 
