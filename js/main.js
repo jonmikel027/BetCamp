@@ -272,7 +272,7 @@ async function plantarse() {
 
     actualizarVistaMano(banca, zonaCartasBanca, puntosBanca);
 
-    //jugamos el tunro de la banca
+    //jugamos el turno de la banca
     mensajeJuego.textContent = "La banca descubre su juego.";
 
     cargando = true;
